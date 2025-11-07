@@ -10,3 +10,5 @@ For IU X-Ray, you can download the dataset from [here](https://openi.nlm.nih.gov
 For MIMIC-CXR, you can download the dataset from [here](https://physionet.org/content/mimic-cxr-jpg/2.1.0/) and then put the files in mimic.
 
 Run the code:
+
+'python train.py'
