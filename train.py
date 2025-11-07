@@ -15,12 +15,6 @@ from models import CNN, MVCNN, TNN, Classifier, Generator, Context
 import torchvision.models as models
 import matplotlib.pyplot as plt
 
-def find_optimal_cutoff(target, predicted):
-    fpr, tpr, threshold = metrics.roc_curve(target, predicted)
-    gmeans = np.sqrt(tpr * (1-fpr))
-    ix = np.argmax(gmeans)
-    return threshold[ix]
-
 def infer(data_loader, model, device='cpu', threshold=None):
     model.eval()
     outputs = []
@@ -50,8 +44,8 @@ def infer(data_loader, model, device='cpu', threshold=None):
 torch.set_num_threads(1)
 torch.manual_seed(seed=123)
 
-RELOAD = True  #True or False
-PHASE = 'INFER'  # TRAIN or INFER
+RELOAD = False  #True or False
+PHASE = 'TRAIN'  # TRAIN or INFER
 DATASET_NAME = 'IUXRAY'
 BACKBONE_NAME = 'DenseNet121'
 MODEL_NAME = 'Context'
@@ -87,8 +81,6 @@ if __name__ == "__main__":
         NUM_CLASSES = 2
         
         dataset = MIMIC('./mimic/', INPUT_SIZE, view_pos=['AP','PA','LATERAL'], max_views=MAX_VIEWS, sources=SOURCES, targets=TARGETS)
-        #pvt=0.9:训练集占90%，debug_mode:是否以调试模式运行（例如只加载少量样本）
-        #train_phase=(PHASE == 'TRAIN'):当前是否处于训练阶段；如果不是训练阶段，可能不加载训练集或进行其他逻辑
         train_data, val_data, test_data = dataset.get_subsets(pvt=0.9, seed=0, generate_splits=True, debug_mode=False, train_phase=(PHASE == 'TRAIN'))
         
         VOCAB_SIZE = len(dataset.vocab)
@@ -186,21 +178,10 @@ if __name__ == "__main__":
                 print('New Best Metric: {}'.format(best_metric)) 
                 print('Saved To:', checkpoint_path_to)
 
-        # 绘制损失曲线
         plt.figure(figsize=(10, 5))
         plt.plot(range(last_epoch + 1, EPOCHS), train_losses, label='Train Loss', marker='o')
         plt.plot(range(last_epoch + 1, EPOCHS), val_losses, label='Validation Loss', marker='s')
         plt.plot(range(last_epoch + 1, EPOCHS), test_losses, label='Test Loss', marker='^')
-
-        # # 为每个点添加文本标签（保留两位小数）
-        # for x, y in zip(last_epoch + 1, train_losses):
-        #     plt.text(x, y + 0.05, f'{y:.3f}', ha='center', fontsize=8, color='blue')
-        #
-        # for x, y in zip(last_epoch + 1, val_losses):
-        #     plt.text(x, y + 0.05, f'{y:.3f}', ha='center', fontsize=8, color='orange')
-        #
-        # for x, y in zip(last_epoch + 1, test_losses):
-        #     plt.text(x, y + 0.05, f'{y:.3f}', ha='center', fontsize=8, color='green')
 
         plt.xlabel('Epochs')
         plt.ylabel('Loss')
